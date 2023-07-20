@@ -10,6 +10,7 @@ const employee = require('./routes/employee')
 const connectDb = require("./database/config");
 const hackathon = require('./routes/hackathon');
 const auth = require("./middleware/auth");
+const company = require("./routes/company");
 app.use(router)
 // require('./routes.js')(router)
 
@@ -17,6 +18,7 @@ app.use(body_parser.json());
 
 app.use("/auth",employee);
 app.use("/hackathon",auth,hackathon);
+app.use("/company",company);
 // app.use(sendError)
 const start = async() => {
     try{

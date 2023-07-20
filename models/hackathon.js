@@ -43,6 +43,11 @@ const hackathon = new mongoose.Schema({
       allowNull: false,
       defaultValue: 'upcoming', 
     },
+    company: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Company',
+        required: true,
+      },
   });
   
   module.exports = mongoose.model('Hackathon',hackathon);

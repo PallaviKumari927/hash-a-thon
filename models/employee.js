@@ -24,6 +24,10 @@ const employee = new mongoose.Schema({
     type: String,
     allowNull: false,
   },
+  role: {
+    type: String,
+    default: 'employee',
+  },
 });
 
 module.exports = mongoose.model('Employee',employee);
