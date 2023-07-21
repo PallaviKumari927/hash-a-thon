@@ -56,4 +56,23 @@ const signIn = async (req, res) => {
     }
 };
 
-module.exports = { signIn, signUp };
+const getAllParticipatedHackathons = async(req,res) => {
+    const employeeId = req.params.employee_id;
+
+    // Find the employee by the provided employeeId and populate the registeredHackathons field
+    const employee = await Employee.findOne({ employee_id: employeeId }).populate({
+      path: 'registeredHackathons',
+      model: 'Hackathon',
+    });
+
+    if (!employee) {
+      return res.status(404).json({ message: 'Employee not found.' });
+    }
+
+    const hackathons = employee.registeredHackathons;
+
+    res.json({ totalHackathons: hackathons.length, hackathons });
+
+};
+
+module.exports = { signIn, signUp ,getAllParticipatedHackathons};

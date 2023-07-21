@@ -1,4 +1,4 @@
-const {signin,signup} = require('../services/employeeService')
+const {signin,signup,getAllParticipatedhackathons} = require('../services/employeeService')
 
 const signIn = async(req,res) => {
     try{
@@ -16,4 +16,13 @@ const signUp = async(req,res) => {
         res.status(500).send(error)
     }
 };
-module.exports = {signIn,signUp};
+const getAllParticipatedHackathons = async(req,res) => {
+    try{
+        const getAllParticipatedHackathons = await getAllParticipatedhackathons(req,res);
+        res.status(200).send(getAllParticipatedHackathons);
+    }catch(error){
+        res.status(500).send(error);
+    }
+
+};
+module.exports = {signIn,signUp,getAllParticipatedHackathons};
