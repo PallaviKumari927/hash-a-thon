@@ -20,7 +20,7 @@ const signUp = async (req, res) => {
         });
 
         const token = jwt.sign(
-            { _id: company._id, email: company.email },
+            { _id: company._id, name: company.name,email: company.email,role: company.role },
             process.env.TOKEN_KEY,
             {
                 expiresIn: "2h",
@@ -46,7 +46,7 @@ const signIn = async (req, res) => {
             return res.status(400).json({ message: "Invalid Credentials" });
         }
         const token = jwt.sign(
-            { _id: existingUser._id, email: existingUser.email },
+            { _id: existingUser._id, email: existingUser.email,role: existingUser.role},
             process.env.TOKEN_KEY
         );
         res.status(201).json({ Company: existingUser, token: token });
