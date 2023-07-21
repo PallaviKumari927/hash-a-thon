@@ -47,7 +47,7 @@ const signIn = async (req, res) => {
             return res.status(400).json({ message: "Invalid Credentials" });
         }
         const token = jwt.sign(
-            { employee_id: existingUser._id, email: existingUser.email },
+            { employee_id: existingUser._id, email: existingUser.email,role:existingUser.role },
             process.env.TOKEN_KEY
         );
         res.status(201).json({ Employee: existingUser, token: token });

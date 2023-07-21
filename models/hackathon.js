@@ -38,16 +38,28 @@ const hackathon = new mongoose.Schema({
       type: Date,
       allowNull: false,
     },
-    status: {
-      type: String,
-      allowNull: false,
-      defaultValue: 'upcoming', 
-    },
     company: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Company',
         required: true,
       },
+      participants: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Employee',
+        },
+      ],
+  });
+
+  hackathon.virtual('status').get(function () {
+    const currentDate = new Date();
+    if (currentDate > this.end_date) {
+      return 'past';
+    } else if (currentDate < this.start_date) {
+      return 'upcoming';
+    } else {
+      return 'active';
+    }
   });
   
   module.exports = mongoose.model('Hackathon',hackathon);

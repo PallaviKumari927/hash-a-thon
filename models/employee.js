@@ -28,6 +28,12 @@ const employee = new mongoose.Schema({
     type: String,
     default: 'employee',
   },
+  registeredHackathons: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Hackathon',
+    },
+  ],
 });
 
 module.exports = mongoose.model('Employee',employee);
