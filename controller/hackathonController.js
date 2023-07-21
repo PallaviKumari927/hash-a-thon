@@ -1,4 +1,4 @@
-const { getAllHackathons,addHackathons,deleteHackathons,updateHackathons,addParticipates,searchHackathons } = require('../services/hackathonService')
+const { getAllHackathons,addHackathons,deleteHackathons,updateHackathons,addParticipates,searchHackathons,getParticipates,getAllParticipates } = require('../services/hackathonService')
 
 
 const getAllHackathon = async(req,res) => {
@@ -54,6 +54,22 @@ const searchHackathon = async(req,res) => {
     }catch(error){
         res.send(error);
     }
+};
+const getParticipate = async(req,res) => {
+    try{
+        const getParticipate = await getParticipates(req,res);
+        res.status(200).send(getParticipate);
+    }catch(error){
+        console.log(error);
+    }
+};
+const getAllParticipate = async(req,res) => {
+    try{
+        const getAllParticipate = await getAllParticipates(req,res);
+        res.status(200).send(getAllParticipate);
+    }catch(error){
+        res.send(error);
+    }
 }
 
-module.exports = {getAllHackathon,addHackathon,deleteHackathon,updateHackathon,addParticipate,searchHackathon};
+module.exports = {getAllHackathon,addHackathon,deleteHackathon,updateHackathon,addParticipate,searchHackathon,getParticipate,getAllParticipate};

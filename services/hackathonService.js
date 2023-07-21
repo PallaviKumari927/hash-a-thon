@@ -1,4 +1,4 @@
-const { getAllHackathon,addHackathon,deleteHackathon,updateHackathon,addParticipate,searchHackathon } = require('../dao/hackathonDao')
+const { getAllHackathon,addHackathon,deleteHackathon,updateHackathon,addParticipate,searchHackathon,getParticipate,getAllParticipate } = require('../dao/hackathonDao')
 
 const getAllHackathons = async(req, res) => {
     return await getAllHackathon(req, res)
@@ -19,4 +19,11 @@ const addParticipates = async(req,res) => {
 const searchHackathons = async(req,res) => {
     return await searchHackathon(req,res)
 }
-module.exports = {  getAllHackathons,addHackathons,deleteHackathons,updateHackathons,addParticipates,searchHackathons };
+const getParticipates = async(req,res) => {
+    return await getParticipate(req,res)
+}
+const getAllParticipates = async(req,res) => {
+    console.log("hello")
+    return await getAllParticipate(req,res)
+}
+module.exports = {  getAllHackathons,addHackathons,deleteHackathons,updateHackathons,addParticipates,searchHackathons,getParticipates,getAllParticipates };

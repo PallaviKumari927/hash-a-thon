@@ -162,6 +162,27 @@ const searchHackathon = async (req,res) => {
 
     res.json({ total: totalHackathons, page, limit, data: hackathonsWithStatus });
 
-}
+};
+const getParticipate = async(req,res) => {
 
-module.exports = { getAllHackathon, addHackathon, deleteHackathon, updateHackathon, addParticipate,searchHackathon };
+    const companyId = req.user._id;
+    const hackathonId = req.params.id;
+    // Check if the logged-in company has permission to view participants for this hackathon
+    const hackathon = await Hackathon.findOne({ _id: hackathonId, company: companyId }).populate('participants', 'name email');
+    if (!hackathon) {
+      return res.status(404).json({ message: 'Hackathon not found or not created by your company.' });
+    }
+
+    const participants = hackathon.participants;
+    res.json({ totalParticipants: participants.length, participants });
+
+};
+const getAllParticipate = async(req,res) => {
+    console.log(req.user._id)
+    const companyId = req.user._id;
+    const hackathons = await Hackathon.find({ company: companyId }).populate('participants', 'name email');
+
+    res.json(hackathons);
+};
+
+module.exports = { getAllHackathon, addHackathon, deleteHackathon, updateHackathon, addParticipate,searchHackathon,getParticipate,getAllParticipate };
