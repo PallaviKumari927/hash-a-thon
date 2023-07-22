@@ -43,12 +43,20 @@ const hackathon = new mongoose.Schema({
     required: true,
   },
   minimumExperienceYears: {
-    type: Number,
-    required: true,
+    experience: {
+      type: Number,
+      required: false,
+      default: 0,
+    },
+    skill: {
+      type: [String],
+      required: false,
+      default: [],
+    },
   },
-  company: {
+  organizer: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Company',
+    ref: 'Organizer',
     required: true,
   },
   participants: [
@@ -57,6 +65,11 @@ const hackathon = new mongoose.Schema({
       ref: 'Employee',
     },
   ],
+  status:
+  {
+    type: String,
+    required:true,
+  }
 });
 
 module.exports = mongoose.model('Hackathon', hackathon);

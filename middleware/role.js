@@ -1,6 +1,6 @@
 const checkOrganizerRole = (req, res, next) => {
 
-    if (req.user.role === 'organizer' || req.user.role === 'admin') {
+    if (req.user.role === 'company' || req.user.role === 'admin') {
         next();
     } else {
         const error = new Error('Access denied. Only users with the role "company" or "Admin" can access this route.');

@@ -10,7 +10,8 @@ const {
     addParticipate,
     searchHackathon,
     getParticipate,
-    getAllParticipate
+    getAllParticipate,
+    getParticipateBasedOnFilter
 } = require("../controller/hackathonController");
 
 const {
@@ -18,16 +19,16 @@ const {
     checkEmployeeRole
 } = require('../middleware/role');
 
-router.route("/").get(getAllHackathon);
+
 router.route("/").post(checkOrganizerRole, addHackathon);
 router.route("/:id").delete(checkOrganizerRole, deleteHackathon);
 router.route("/:id").patch(checkOrganizerRole, updateHackathon);
 
-router.route("/:id/participate").post(addParticipate)
-router.route("/:id/participate").get(getParticipate)
-router.route("/participates").get(getAllParticipate)
+router.route("/:id/participate").post(checkEmployeeRole,addParticipate)
+router.route("/:id/participate").get(checkOrganizerRole,getParticipate)
+router.route("/participates").get(checkOrganizerRole,getAllParticipate)
 
 router.route("/hackathon").get(searchHackathon)
-
+router.route("/organizer/:hackathonId/participants").get(getParticipateBasedOnFilter)
 
 module.exports = router;

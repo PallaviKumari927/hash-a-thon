@@ -22,7 +22,7 @@ app.use(body_parser.json());
 app.use('/auth', auth)
 app.use('/', authentication);
 app.use("/auth/employee", employee);
-app.use("auth/hackathon", hackathon);
+app.use("/auth/hackathon", hackathon);
 app.use("/auth/organizer", organizer);
 
 const start = async () => {

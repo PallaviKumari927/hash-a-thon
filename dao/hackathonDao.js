@@ -1,5 +1,6 @@
+const { StatusCodes } = require('http-status-codes')
 const Hackathon = require('../models/hackathon');
-const Company = require('../models/organizer')
+const Organizer = require('../models/organizer')
 const Employee = require('../models/employee')
 
 
@@ -17,9 +18,9 @@ const getAllHackathon = async (req, res) => {
   const hackathons = await Hackathon.find()
     .skip(skip)
     .limit(limit)
-    .populate('company', 'name') // Populate the company field with the name only
+    .populate('organizer', 'company_name')
 
-  // Calculate the status field dynamically for each hackathon in the response
+
   const hackathonsWithStatus = hackathons.map((hackathon) => {
     const isRegistrationOpen =
       currentDate >= hackathon.registration_start_date && currentDate <= hackathon.registration_end_date;
@@ -42,40 +43,48 @@ const getAllHackathon = async (req, res) => {
 
   const totalHackathons = await Hackathon.countDocuments();
 
-  res.json({ total: totalHackathons, page, limit, data: hackathonsWithStatus });
+  res.status(StatusCodes.OK).send(
+    {
+      success: true,
+      message: hackathonsWithStatus && hackathonsWithStatus.length ? 'Data Found' : 'Hackathon not found',
+      data: [{ total: totalHackathons, page, limit, data: hackathonsWithStatus }]
+    })
 
-
+  next()
 };
 
 const addHackathon = async (req, res) => {
 
-    const companyId = req.user._id;
-    const { name,
-        start_date,
-        end_date,
-        technology_stack,
-        min_requirements,
-        max_participants,
-        registration_start_date,
-        registration_end_date } = req.body;
+  const organizerId = req.user._id;
+  const {
+    name,
+    start_date,
+    end_date,
+    technology_stack,
+    min_requirements,
+    max_participants,
+    registration_start_date,
+    registration_end_date,
+    requiredSkills,
+    minimumExperienceYears
+  } = req.body;
 
-    const company = await Company.findOne({ _id: req.user._id }).select('role');
-    if (req.user.role == 'employee') {
-        return res.status(403).json({ message: 'Only Companies can create hackathons.' });
-    }
+  const organizer = await Organizer.findOne({ _id: req.user._id }).select('role');
 
-    return hackathon = await Hackathon.create({
-        name,
-        start_date,
-        end_date,
-        technology_stack,
-        min_requirements,
-        max_participants,
-        registration_start_date,
-        registration_end_date,
-        company: companyId,
-        
-    });
+  return hackathon = await Hackathon.create({
+    name,
+    start_date,
+    end_date,
+    technology_stack,
+    min_requirements,
+    max_participants,
+    registration_start_date,
+    registration_end_date,
+    requiredSkills,
+    minimumExperienceYears,
+    organizer: organizerId,
+
+  });
 
 };
 
@@ -145,135 +154,195 @@ const deleteHackathon = async (req, res) => {
 };
 
 const addParticipate = async (req, res) => {
-  
-    if (req.user.role == 'company') {
-        return res.status(403).json({ message: 'Only Employees can participate in hackathons.' });
+
+  const employeeId = req.user.employee_id;
+
+  const employee = await Employee.findById(employeeId);
+  if (!employee) {
+    return res.status(404).json({ message: 'Employee not found.' });
+  }
+
+  const hackathon = await Hackathon.findById(req.params.id);
+  if (!hackathon) {
+    return res.status(404).json({ message: 'Hackathon not found.' });
+  }
+
+
+  const currentDate = new Date();
+  if (currentDate > hackathon.end_date) {
+    return res.status(400).json({ message: 'The hackathon date has already passed.' });
+  }
+
+  if (hackathon.participants.length >= hackathon.max_participants) {
+    return res.status(400).json({ message: 'The hackathon slot is already full.' });
+  }
+  if (hackathon.participants.includes(employeeId)) {
+    return res.status(400).json({ message: 'Employee is already participating in the hackathon.' });
+  }
+
+  for (const registeredHackathonId of employee.registeredHackathons) {
+    const registeredHackathon = await Hackathon.findById(registeredHackathonId);
+
+    if (
+      hasTimeOverlap(
+        hackathon.start_date,
+        hackathon.end_date,
+        registeredHackathon.start_date,
+        registeredHackathon.end_date
+      )
+    ) {
+      return res.status(400).json({
+        message: 'Employee is already registered for another hackathon during the same time period.',
+      });
     }
-    const employeeId = req.user.employee_id;
+  }
 
-    const employee = await Employee.findById(employeeId);
-    if (!employee) {
-        return res.status(404).json({ message: 'Employee not found.' });
+  const { experience, skill } = hackathon.min_requirements;
+
+  if (experience && employee.experience < experience) {
+    return res.status(400).json({ message: 'You do not satisfy the minimum experience requirement' });
+  }
+
+  if (skill && skill.length > 0) {
+    const userSkills = employee.skill;
+    const missingSkills = skill.filter((requiredSkill) => !userSkills.includes(requiredSkill));
+    if (missingSkills.length > 0) {
+      return res.status(400).json({ message: `You are missing the following skills: ${missingSkills.join(', ')}` });
     }
+  }
 
-    const hackathon = await Hackathon.findById(req.params.id);
-    if (!hackathon) {
-        return res.status(404).json({ message: 'Hackathon not found.' });
-    }
+  hackathon.participants.push(req.user.employee_id);
+  await hackathon.save();
 
+  employee.registeredHackathons.push(hackathon._id);
+  await employee.save();
 
-    const currentDate = new Date();
-    if (currentDate > hackathon.end_date) {
-        return res.status(400).json({ message: 'The hackathon date has already passed.' });
-    }
-
-    if (hackathon.participants.length >= hackathon.max_participants) {
-        return res.status(400).json({ message: 'The hackathon slot is already full.' });
-    }
-    if (hackathon.participants.includes(employeeId)) {
-        return res.status(400).json({ message: 'Employee is already participating in the hackathon.' });
-    }
-
-    for (const registeredHackathonId of employee.registeredHackathons) {
-        const registeredHackathon = await Hackathon.findById(registeredHackathonId);
-
-        if (
-            hasTimeOverlap(
-                hackathon.start_date,
-                hackathon.end_date,
-                registeredHackathon.start_date,
-                registeredHackathon.end_date
-            )
-        ) {
-            return res.status(400).json({
-                message: 'Employee is already registered for another hackathon during the same time period.',
-            });
-        }
-    }
-
-    hackathon.participants.push(req.user.employee_id);
-    await hackathon.save();
-
-    employee.registeredHackathons.push(hackathon._id);
-    await employee.save();
-
-    res.status(200).json({ message: 'Employee successfully registered for the hackathon.' });
+  res.status(200).json({ message: 'Employee successfully registered for the hackathon.' });
 };
 
-const searchHackathon = async (req,res) => {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
+const searchHackathon = async (req, res) => {
+  
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const query = req.query.q ? req.query.q.toString().trim() : ''; // Ensure query is a string and remove leading/trailing spaces
 
-    const { search } = req.query;
-    const currentDate = new Date();
+  const currentTime = new Date();
 
-    const query = {
-      $or: [
-        { name: { $regex: new RegExp(search, 'i') } }, // Case-insensitive search by hackathon name
-        { technology_stack: { $regex: new RegExp(search, 'i') } }, // Case-insensitive search by technology stack
-      ],
+  // Construct the MongoDB query to search by name, technology stack, and company name
+  const searchQuery = {
+    $or: [
+      { name: { $regex: query.name, $options: 'i' } }, // Case-insensitive search for Hackathon's Name
+      { technology_stack: { $regex: query, $options: 'i' } }, // Case-insensitive search for Technology Stack
+      { organizer: { $regex: query, $options: 'i' } }, // Case-insensitive search for Company Name
+    ],
+    start_date: { $gte: currentTime }, // Only consider upcoming Hackathons
+  };
+  
+  const searchResults = await Hackathon.find(searchQuery)
+    .skip((page - 1) * limit)
+    .limit(limit)
+    .sort({ start_date: 1 });
+
+
+};
+const getParticipate = async (req, res) => {
+
+  const organizerId = req.user._id;
+  const hackathonId = req.params.id;
+
+  const hackathon = await Hackathon.findOne({ _id: hackathonId, organizer: organizerId }).populate('participants', 'name email');
+  if (!hackathon) {
+    return res.status(404).json({ message: 'Hackathon not found or not created by you.' });
+  }
+
+  const participants = hackathon.participants;
+  res.json({ totalParticipants: participants.length, participants });
+
+};
+const getAllParticipate = async (req, res) => {
+
+  const organizerId = req.user._id;
+  const hackathons = await Hackathon.find({ organizer: organizerId }).populate('participants', 'name email');
+
+  res.json(hackathons);
+};
+const getHackathonActiveDao = async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const currentTime = new Date();
+
+  return activeHackathons = await Hackathon.find({
+    start_date: { $lte: currentTime },
+    end_date: { $gte: currentTime },
+  })
+    .select('-participants')
+    .skip((page - 1) * limit)
+    .limit(limit)
+    .sort({ start_date: 1 });
+
+
+};
+const getHackathonPastDao = async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const currentTime = new Date().toISOString();
+
+  return pastHackathons = await Hackathon.find({
+    endDate: { $lt: currentTime },
+  })
+    .select('-participants')
+    .skip((page - 1) * limit)
+    .limit(limit)
+    .sort({ endDate: -1 });
+
+};
+const getHackathonUpcomingDao = async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const currentTime = new Date().toISOString();
+
+  return upcomingHackathons = await Hackathon.find({
+    start_date: { $gt: currentTime },
+  })
+    .select('-participants')
+    .skip((page - 1) * limit)
+    .limit(limit)
+    .sort({ start_date: 1 });
+
+
+};
+const getParticipateBasedOnFilterDao = async (req,res) => {
+  const hackathonId = req.params.hackathonId;
+    const { experience, technology_stack } = req.query;
+
+    // Construct the MongoDB query to filter participants based on the provided parameters
+    const filterQuery = {
+      hackathon: hackathonId,
     };
 
-    // Add a check for company name search
-    if (!isNaN(search)) {
-      query.$or.push({ company: search }); // If the search term is a valid ObjectId, search by company ObjectId
-    } else {
-      query.$or.push({ 'company.name': { $regex: new RegExp(search, 'i') } }); // Case-insensitive search by company name
+    if (experience) {
+      filterQuery['experience'] = experience;
     }
 
-    const hackathons = await Hackathon.find(query)
-      .skip(skip)
-      .limit(limit)
-      .populate('company', 'name')
-      .lean();
-
-    // Calculate the status field dynamically for each hackathon in the response
-    const hackathonsWithStatus = hackathons.map((hackathon) => {
-      const isRegistrationOpen =
-        currentDate >= hackathon.registration_start_date && currentDate <= hackathon.registration_end_date;
-      const isSlotsFull = hackathon.participants.length >= hackathon.max_participants;
-
-      let status;
-      if (currentDate < hackathon.startDate) {
-        status = 'upcoming';
-      } else if (currentDate > hackathon.endDate) {
-        status = 'past';
-      } else {
-        status = isRegistrationOpen && !isSlotsFull ? 'open' : 'closed';
-      }
-
-      return {
-        ...hackathon,
-        status,
-      };
-    });
-
-    const totalHackathons = await Hackathon.countDocuments(query);
-
-    res.json({ total: totalHackathons, page, limit, data: hackathonsWithStatus });
-
-};
-const getParticipate = async(req,res) => {
-
-    const companyId = req.user._id;
-    const hackathonId = req.params.id;
-    // Check if the logged-in company has permission to view participants for this hackathon
-    const hackathon = await Hackathon.findOne({ _id: hackathonId, company: companyId }).populate('participants', 'name email');
-    if (!hackathon) {
-      return res.status(404).json({ message: 'Hackathon not found or not created by your company.' });
+    if (technology_stack) {
+      filterQuery['technology_stack'] = technology_stack;
     }
 
-    const participants = hackathon.participants;
-    res.json({ totalParticipants: participants.length, participants });
+    const participants = await Hackathon.find(filterQuery).populate('participants');
+    console.log(participants)
+}
 
+module.exports = {
+  getAllHackathon,
+  addHackathon,
+  deleteHackathon,
+  updateHackathon,
+  addParticipate,
+  searchHackathon,
+  getParticipate,
+  getAllParticipate,
+  getHackathonActiveDao,
+  getHackathonPastDao,
+  getHackathonUpcomingDao,
+  getParticipateBasedOnFilterDao
 };
-const getAllParticipate = async(req,res) => {
-  
-    const companyId = req.user._id;
-    const hackathons = await Hackathon.find({ company: companyId }).populate('participants', 'name email');
-
-    res.json(hackathons);
-};
-
-module.exports = { getAllHackathon, addHackathon, deleteHackathon, updateHackathon, addParticipate,searchHackathon,getParticipate,getAllParticipate };

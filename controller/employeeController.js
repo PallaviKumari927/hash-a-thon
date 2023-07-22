@@ -2,22 +2,22 @@ const { StatusCodes } = require('http-status-codes')
 const { catchAsync } = require('../middleware/errors')
 const {signin,signup,getAllParticipatedhackathons,getEmployeeByEmailService,updateEmployeeService,deleteEmployeeService} = require('../services/employeeService')
 
-const employeeLogin = async(req,res) => {
+const employeeLogin = catchAsync(async(req,res) => {
     try{
     const data = await signin(req,res);
     res.status(200).send(data);
     }catch(error){
         res.status(500).send(error)
     }
-};
-const employeeSignUp = async(req,res) => {
+});
+const employeeSignUp = catchAsync(async(req,res) => {
     try{
     const data = await signup(req,res);
     res.status(200).send(data);
     }catch(error){
         res.status(500).send(error)
     }
-};
+});
 const getEmployeeByEmail = catchAsync(async(req,res,next) =>{
   const { email } = req.query
   
