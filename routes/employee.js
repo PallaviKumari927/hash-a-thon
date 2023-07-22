@@ -1,10 +1,11 @@
 const express = require("express");
 const router = express.Router();
 
-const {signIn,signUp,getAllParticipatedHackathons} = require("../controller/employeeController");
+const {updateEmployee,deleteEmployee,getAllParticipatedHackathons} = require("../controller/employeeController");
 
-router.route("/signIn").post(signIn);
-router.route("/signUp").post(signUp);
+
+router.route('/profile/update').patch(updateEmployee)
+router.route('/profile/delete').delete(deleteEmployee)
 
 router.route('/hackathon/participated').get(getAllParticipatedHackathons)
 

@@ -1,5 +1,5 @@
 const Hackathon = require('../models/hackathon');
-const Company = require('../models/company')
+const Company = require('../models/organizer')
 const Employee = require('../models/employee')
 
 

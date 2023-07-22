@@ -74,5 +74,21 @@ const getAllParticipatedHackathons = async(req,res) => {
     res.json({ totalHackathons: hackathons.length, hackathons });
 
 };
+const getEmployeeByEmailDao = async (email) => {
+    return await Employee.find({
+        email:email
+    })
+    
+};
+const updateEmployeeDao = async (req) => {
+    return await Employee.findOneAndUpdate(
+        { email: req.user.email }, 
+    req.body, 
+    { new: true }
+    );
+};
 
-module.exports = { signIn, signUp ,getAllParticipatedHackathons};
+const deleteEmployeeDao = async(req) => {
+    return await Employee.findOneAndRemove({ email: req.user.email });
+};
+module.exports = { signIn, signUp ,getAllParticipatedHackathons,getEmployeeByEmailDao,updateEmployeeDao,deleteEmployeeDao};
