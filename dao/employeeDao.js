@@ -3,7 +3,7 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 
 const signUp = async (req, res) => {
-    const { username, email, password, designation } = req.body;
+    const { username, email, password, designation ,experience,skill} = req.body;
     try {
         const existingUser = await Employee.findOne({ email: email });
         if (existingUser) {
@@ -18,6 +18,7 @@ const signUp = async (req, res) => {
             password: hashPassword,
             designation,
             experience,
+            skill
         });
 
         const token = jwt.sign(

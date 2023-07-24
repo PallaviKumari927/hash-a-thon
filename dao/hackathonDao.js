@@ -92,19 +92,17 @@ const updateHackathon = async (req, res) => {
   const companyId = req.user.id;
   const hackathonId = req.params._id;
 
-  // Find the Hackathon by the provided hackathonId and company
   const hackathon = await Hackathon.findOne({ _id: hackathonId, company: companyId });
 
   if (!hackathon) {
     return res.status(404).json({ message: 'Hackathon not found or not hosted by your company.' });
   }
 
-  // Check if the registration has not started yet
   if (new Date() >= hackathon.registration_start_date) {
     return res.status(403).json({ message: 'Cannot modify the Hackathon as the registration has started.' });
   }
 
-  // Update the Hackathon information
+
   hackathon.name = req.body.name;
   hackathon.start_date = req.body.start_date;
   hackathon.end_date = req.body.end_date;
@@ -127,16 +125,14 @@ const deleteHackathon = async (req, res) => {
   console.log(companyId);
   console.log(hackathonId)
 
-  // Find the Hackathon by the provided hackathonId and company
+  
   const hackathon = await Hackathon.findOne({ _id: hackathonId, company: companyId });
   console.log(hackathon)
   if (!hackathon) {
     return res.status(404).json({ message: 'Hackathon not found or not hosted by your company.' });
   }
 
-  // Check if the registration has not started yet
 
-  // Remove the Hackathon from employees' registeredHackathons
   const employeesToUpdate = await Employee.find({ registeredHackathons: hackathonId });
   console.log(employeesToUpdate)
   for (const employee of employeesToUpdate) {
@@ -145,7 +141,7 @@ const deleteHackathon = async (req, res) => {
     );
     await employee.save();
   }
-  // Delete the Hackathon
+ 
   await hackathon.remove();
 
   res.json({ message: 'Hackathon canceled successfully.' });
@@ -223,18 +219,18 @@ const searchHackathon = async (req, res) => {
   
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
-  const query = req.query.q ? req.query.q.toString().trim() : ''; // Ensure query is a string and remove leading/trailing spaces
+  const query = req.query.q ? req.query.q.toString().trim() : ''; 
 
   const currentTime = new Date();
 
-  // Construct the MongoDB query to search by name, technology stack, and company name
+
   const searchQuery = {
     $or: [
-      { name: { $regex: query.name, $options: 'i' } }, // Case-insensitive search for Hackathon's Name
-      { technology_stack: { $regex: query, $options: 'i' } }, // Case-insensitive search for Technology Stack
-      { organizer: { $regex: query, $options: 'i' } }, // Case-insensitive search for Company Name
+      { name: { $regex: query.name, $options: 'i' } }, 
+      { technology_stack: { $regex: query, $options: 'i' } },
+      { organizer: { $regex: query, $options: 'i' } }, 
     ],
-    start_date: { $gte: currentTime }, // Only consider upcoming Hackathons
+    start_date: { $gte: currentTime }, 
   };
   
   const searchResults = await Hackathon.find(searchQuery)
