@@ -50,7 +50,6 @@ const getAllHackathon = async (req, res) => {
       data: [{ total: totalHackathons, page, limit, data: hackathonsWithStatus }]
     })
 
-  next()
 };
 
 const addHackathon = async (req, res) => {
