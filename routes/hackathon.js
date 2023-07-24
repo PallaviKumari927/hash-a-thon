@@ -29,6 +29,6 @@ router.route("/:id/participate").get(checkOrganizerRole,getParticipate)
 router.route("/participates").get(checkOrganizerRole,getAllParticipate)
 
 router.route("/hackathon").get(searchHackathon)
-router.route("/organizer/:hackathonId/participants").get(getParticipateBasedOnFilter)
+router.route("/organizer/:hackathonId/participants").get(checkOrganizerRole,getParticipateBasedOnFilter)
 
 module.exports = router;

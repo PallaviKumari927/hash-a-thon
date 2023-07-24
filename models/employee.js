@@ -31,7 +31,7 @@ const employee = new mongoose.Schema({
   experience: {
     type: Number,
     allowNull: false,
-    required: [true, "Employee experience is required"]
+  
   },
   skill: {
     type: [String],

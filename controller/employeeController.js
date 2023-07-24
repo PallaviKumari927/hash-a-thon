@@ -10,14 +10,14 @@ const employeeLogin = catchAsync(async(req,res) => {
         res.status(500).send(error)
     }
 });
-const employeeSignUp = catchAsync(async(req,res) => {
+const employeeSignUp = async(req,res) => {
     try{
     const data = await signup(req,res);
     res.status(200).send(data);
     }catch(error){
         res.status(500).send(error)
     }
-});
+};
 const getEmployeeByEmail = catchAsync(async(req,res,next) =>{
   const { email } = req.query
   

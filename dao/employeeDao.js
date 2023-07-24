@@ -1,4 +1,3 @@
-
 const Employee = require('../models/employee')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
@@ -17,7 +16,8 @@ const signUp = async (req, res) => {
             username,
             email: email.toLowerCase(),
             password: hashPassword,
-            designation
+            designation,
+            experience,
         });
 
         const token = jwt.sign(
@@ -29,7 +29,7 @@ const signUp = async (req, res) => {
         );
         res.status(201).json({ employee: employee, token: token });
     } catch (error) {
-        console.log(error);
+        res.send(error);
     }
 };
 
@@ -59,7 +59,6 @@ const signIn = async (req, res) => {
 const getAllParticipatedHackathons = async(req,res) => {
     const employeeId = req.params.employee_id;
 
-    // Find the employee by the provided employeeId and populate the registeredHackathons field
     const employee = await Employee.findOne({ employee_id: employeeId }).populate({
       path: 'registeredHackathons',
       model: 'Hackathon',
